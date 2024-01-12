@@ -1,10 +1,10 @@
 const express=require('express');
-const userRoute=require('./routes/userRoute.js');
-const adminRoute=require('./routes/adminRoute.js');
 const app=express();
 const mongoose=require('mongoose');
 const cors=require('cors');
-const multer=require('multer');
+require('dotenv').config();
+const userRoute=require('./routes/userRoute.js');
+const adminRoute=require('./routes/adminRoute.js');
 
 app.use(cors());
 app.use(express.json());
@@ -20,9 +20,8 @@ app.use('/uploads',express.static('uploads'));
 
 app.use("/user",userRoute);
 app.use("/admin",adminRoute);
-// app.use("/admin",adminRoute);
 
-const port=process.env.PORT||3000;
+const port=process.env.PORT||4000;
 
 app.listen(port,()=>{
     console.log(`Listening to port ${port}`);

@@ -3,22 +3,22 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
 import { BASE_URL } from "../url";
 
-function EditUser() {
+function EditUserHome() {
   const [imagePreview, setImagePreview] = useState(null);
+  const [image, setImage] = useState(null);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [user, setUser] = useState({});
   const ID = useParams();
-  console.log(ID);
   const navigate = useNavigate();
 
   const handleImageChange = (event) => {
     const file = event.target.files[0];
+    setImage(file);
 
     if (file) {
       const reader = new FileReader();
-
       reader.onloadend = () => {
         setImagePreview(reader.result);
       };
@@ -30,56 +30,68 @@ function EditUser() {
   const handleSubmit = (e) => {
     e.preventDefault();
 
+    if (name.trim() === "") {
+      alert("Please enter your name.");
+      return;
+    }
+
+    if (!/^\S+@\S+\.\S+$/.test(email)) {
+      alert("Please enter a valid email address.");
+      return;
+    }
+
     const formData = new FormData();
-    formData.append("profilePhoto", imagePreview);
+    formData.append("profilePhoto", image);
     formData.append("name", name);
     formData.append("email", email);
     formData.append("password", password);
-    const adminToken = localStorage.getItem("adminToken");
-    console.log("AdminToken : ", adminToken);
+    const token = localStorage.getItem("token");
+
     axios
-    .put(`${BASE_URL}/admin/users/${ID.userId}`, formData, {
-      headers: {
-        "Content-Type": "multipart/form-data",
-        Authorization: adminToken,
-      },
-    })
-    .then((response) => {      
-      alert(response.data.message);
-      navigate("/");
-    })
-    .catch((error) => {
-      alert(error.response.data.message);
-    });
-  };
-  
-  useEffect(() => {
-    const adminToken = localStorage.getItem("adminToken");
-    axios
-      .get(`${BASE_URL}/admin/users/${ID.userId}`, {
+      .put(`${BASE_URL}/user/edituser/${ID.userId}`, formData, {
         headers: {
-          Authorization: adminToken,
+          "Content-Type": "multipart/form-data",
+          Authorization: token,
+        },
+      })
+      .then((response) => {
+        // console.log("registration success : ", response);
+        alert(response.data.message);
+        navigate("/");
+      })
+      .catch((error) => {
+        alert(error.response.data.message);
+      });
+  };
+
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    axios
+      .get(`${BASE_URL}/user/getuser/${ID.userId}`, {
+        headers: {
+          Authorization: token,
         },
       })
       .then((result) => {
-        console.log("result : ", result);
+        // console.log("result : ", result.data.profile);
         setUser(result.data);
       })
       .catch((err) => {
         console.log(err);
       });
+    console.log("user profile1 : ", user.profile);
   }, []);
+  console.log("user profile2 : ", user.profile);
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-[#1A2238]">
       <div className="bg-white p-8 rounded-lg shadow-lg max-w-sm w-full">
-        <h2 className="text-2xl font-semibold text-center mb-4">Edit account</h2>
+        <h2 className="text-2xl font-semibold text-center mb-4">Edit</h2>
         <form onSubmit={handleSubmit}>
           <div className="flex justify-center mb-6">
-            <label htmlFor="upload" className={`inline-block bg-gray-200 rounded-full p-0  cursor-pointer`}>
-              <img src={imagePreview ? imagePreview : `${BASE_URL}/uploads/${user.profile}`} alt="Preview" className="rounded-full w-32 h-32 object-cover border p-2" />
+            <label htmlFor="upload" className={`inline-block bg-gray-200 rounded-full  p-0 cursor-pointer`}>
+              {<img src={imagePreview ? imagePreview : `${BASE_URL}/uploads/${user.profile}`} alt="Preview" className="rounded-full w-32 h-32 object-cover border p-2" />}
             </label>
-            {console.log(user.name)}
             <input type="file" id="upload" accept="image/*" style={{ display: "none" }} required onChange={handleImageChange} />
           </div>
           <div className="mb-4">
@@ -99,10 +111,9 @@ function EditUser() {
               Password *
             </label>
             <input type="password" id="password" className="htmlForm-input w-full px-4 py-2 border rounded-lg text-gray-700 focus:ring-blue-500" required placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} />
-            <p className="text-gray-600 text-xs mt-1">Must contain 1 uppercase letter, 1 number, min. 8 characters.</p>
           </div>
           <button type="submit" className="w-full bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50">
-            Register
+            Submit edit
           </button>
           <Link to="/dashboard">
             <button className="mx-auto flex mt-4 underline">go back</button>
@@ -113,4 +124,4 @@ function EditUser() {
   );
 }
 
-export default EditUser;
+export default EditUserHome;

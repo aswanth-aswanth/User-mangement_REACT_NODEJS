@@ -1,9 +1,9 @@
 import { useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import axios from "axios";
-import { BASE_URL } from "../url";
 import { useDispatch } from "react-redux";
+import axios from "axios";
 import { loginSuccess, adminLoginSuccess } from "../reducers/authSlice";
+import { BASE_URL } from "../url";
 
 function Login() {
   const email = useRef("");

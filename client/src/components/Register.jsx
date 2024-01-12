@@ -1,13 +1,15 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
-import { setUser } from "../reducers/userSlice";
 import axios from "axios";
+import { setUser } from "../reducers/userSlice";
 import { BASE_URL } from "../url";
+
 function Register() {
   const [imagePreview, setImagePreview] = useState(null);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+  const [image, setImage] = useState("");
   const [password, setPassword] = useState("");
 
   const dispatch = useDispatch();
@@ -15,7 +17,7 @@ function Register() {
 
   const handleImageChange = (event) => {
     const file = event.target.files[0];
-
+    setImage(file);
     if (file) {
       const reader = new FileReader();
 
@@ -30,12 +32,22 @@ function Register() {
   const handleSubmit = (e) => {
     e.preventDefault();
 
+    if (name.trim() === "") {
+      alert("Please enter your name.");
+      return;
+    }
+  
+    if (!/^\S+@\S+\.\S+$/.test(email)) {
+      alert("Please enter a valid email address.");
+      return;
+    }
+
     const formData = new FormData();
-    formData.append("profilePhoto", imagePreview); // Assuming imagePreview is the base64 representation of the image
+    console.log("Image preview : ", imagePreview);
+    formData.append("profilePhoto", image); 
     formData.append("name", name);
     formData.append("email", email);
     formData.append("password", password);
-
     axios
       .post(`${BASE_URL}/user/register`, formData, {
         headers: {
@@ -45,12 +57,11 @@ function Register() {
       .then((response) => {
         const userData = response.data;
         dispatch(setUser(userData));
-        console.log("registration success : ",response);
+        console.log("registration success : ", response);
+        alert(response.data.message);
         navigate("/login");
       })
       .catch((error) => {
-        // console.error("Registration failed", error);
-        // console.log(error.response.data.message);
         alert(error.response.data.message);
       });
   };

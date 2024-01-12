@@ -1,21 +1,19 @@
-import { useEffect, useState } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { BASE_URL } from "../url";
-
-function EditUser() {
+function CreateUser() {
   const [imagePreview, setImagePreview] = useState(null);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [user, setUser] = useState({});
-  const ID = useParams();
-  console.log(ID);
+  const [image, setImage] = useState("");
+
   const navigate = useNavigate();
 
   const handleImageChange = (event) => {
     const file = event.target.files[0];
-
+    setImage(file);
     if (file) {
       const reader = new FileReader();
 
@@ -30,69 +28,69 @@ function EditUser() {
   const handleSubmit = (e) => {
     e.preventDefault();
 
+    if (name.trim() === "") {
+      alert("Please enter your name.");
+      return;
+    }
+  
+    if (!/^\S+@\S+\.\S+$/.test(email)) {
+      alert("Please enter a valid email address.");
+      return;
+    }
+    
     const formData = new FormData();
-    formData.append("profilePhoto", imagePreview);
+    formData.append("profilePhoto", image);
     formData.append("name", name);
     formData.append("email", email);
     formData.append("password", password);
     const adminToken = localStorage.getItem("adminToken");
-    console.log("AdminToken : ", adminToken);
+
     axios
-    .put(`${BASE_URL}/admin/users/${ID.userId}`, formData, {
-      headers: {
-        "Content-Type": "multipart/form-data",
-        Authorization: adminToken,
-      },
-    })
-    .then((response) => {      
-      alert(response.data.message);
-      navigate("/");
-    })
-    .catch((error) => {
-      alert(error.response.data.message);
-    });
-  };
-  
-  useEffect(() => {
-    const adminToken = localStorage.getItem("adminToken");
-    axios
-      .get(`${BASE_URL}/admin/users/${ID.userId}`, {
+      .post(`${BASE_URL}/admin/users`, formData, {
         headers: {
+          "Content-Type": "multipart/form-data",
           Authorization: adminToken,
         },
       })
-      .then((result) => {
-        console.log("result : ", result);
-        setUser(result.data);
+      .then((response) => {
+        console.log("registration success : ", response);
+        alert(response.data.message);
+        navigate("/");
       })
-      .catch((err) => {
-        console.log(err);
+      .catch((error) => {
+        alert(error.response.data.message);
       });
-  }, []);
+  };
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-[#1A2238]">
       <div className="bg-white p-8 rounded-lg shadow-lg max-w-sm w-full">
-        <h2 className="text-2xl font-semibold text-center mb-4">Edit account</h2>
-        <form onSubmit={handleSubmit}>
+        <h2 className="text-2xl font-semibold text-center mb-4">Create a new account</h2>
+        <form onSubmit={handleSubmit} encType="multipart/form-data">
           <div className="flex justify-center mb-6">
-            <label htmlFor="upload" className={`inline-block bg-gray-200 rounded-full p-0  cursor-pointer`}>
-              <img src={imagePreview ? imagePreview : `${BASE_URL}/uploads/${user.profile}`} alt="Preview" className="rounded-full w-32 h-32 object-cover border p-2" />
+            <label htmlFor="upload" className={`inline-block bg-gray-200 rounded-full ${imagePreview ? "p-0" : "p-10"} cursor-pointer`}>
+              {imagePreview ? (
+                <img src={imagePreview} alt="Preview" className="rounded-full w-32 h-32 object-cover border p-2" />
+              ) : (
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+                  <path fill="currentColor" d="M12 4a4 4 0 0 1 4 4a4 4 0 0 1-4 4a4 4 0 0 1-4-4a4 4 0 0 1 4-4m0 10c4.42 0 8 1.79 8 4v2H4v-2c0-2.21 3.58-4 8-4" />
+                </svg>
+              )}
             </label>
-            {console.log(user.name)}
+
             <input type="file" id="upload" accept="image/*" style={{ display: "none" }} required onChange={handleImageChange} />
           </div>
           <div className="mb-4">
             <label htmlFor="name" className="block text-gray-700 text-sm font-semibold mb-2">
               Full Name *
             </label>
-            <input type="text" id="name" className="htmlForm-input w-full px-4 py-2 border rounded-lg text-gray-700 focus:ring-blue-500" required placeholder={user.name} value={name} onChange={(e) => setName(e.target.value)} />
+            <input type="text" id="name" className="htmlForm-input w-full px-4 py-2 border rounded-lg text-gray-700 focus:ring-blue-500" required placeholder="username" value={name} onChange={(e) => setName(e.target.value)} />
           </div>
           <div className="mb-4">
             <label htmlFor="email" className="block text-gray-700 text-sm font-semibold mb-2">
               Email Address *
             </label>
-            <input type="email" id="email" className="htmlForm-input w-full px-4 py-2 border rounded-lg text-gray-700 focus:ring-blue-500" required placeholder={user.email} value={email} onChange={(e) => setEmail(e.target.value)} />
+            <input type="email" id="email" className="htmlForm-input w-full px-4 py-2 border rounded-lg text-gray-700 focus:ring-blue-500" required placeholder="abc@gmail.com" value={email} onChange={(e) => setEmail(e.target.value)} />
           </div>
           <div className="mb-6">
             <label htmlFor="password" className="block text-gray-700 text-sm font-semibold mb-2">
@@ -104,7 +102,7 @@ function EditUser() {
           <button type="submit" className="w-full bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50">
             Register
           </button>
-          <Link to="/dashboard">
+          <Link to="/">
             <button className="mx-auto flex mt-4 underline">go back</button>
           </Link>
         </form>
@@ -113,4 +111,4 @@ function EditUser() {
   );
 }
 
-export default EditUser;
+export default CreateUser;

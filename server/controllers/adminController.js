@@ -1,14 +1,13 @@
 const User = require('../models/userModel');
 const Admin = require('../models/adminModel');
 const jwt=require('jsonwebtoken');
+const bcrypt=require('bcrypt');
+const mongoose=require('mongoose');
 
-// Get all users controller
 const getAllUsers = async (req, res) => {
   try {
-    console.log("executed");
-    // Fetch all users from the database
+    // console.log("executed");
     const users = await User.find();
-    console.log(users);
     res.status(200).json(users);
   } catch (error) {
     console.error(error);
@@ -16,11 +15,9 @@ const getAllUsers = async (req, res) => {
   }
 };
 
-// Get user by ID controller
 const getUserById = async (req, res) => {
   try {
-    // Fetch user data from the database by ID
-    const user = await User.findById(req.params.userId).select('-password');
+    const user = await User.findById(req.params.userId);
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
@@ -31,25 +28,19 @@ const getUserById = async (req, res) => {
   }
 };
 
-// Create user controller
 const createUser = async (req, res) => {
   try {
-    // Extract user data from the request body
     const { name, email, password } = req.body;
-
-    // TODO: Add validation and error handling for required fields
-
-    // Hash the password
+    console.log("req-file : ",req.file);
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Create a new user
     const newUser = new User({
       name,
       email,
       password: hashedPassword,
+      profile:req.file?`${req.file.filename}`:null,
     });
 
-    // Save the user to the database
     await newUser.save();
 
     res.status(201).json({ message: 'User created successfully' });
@@ -59,12 +50,8 @@ const createUser = async (req, res) => {
   }
 };
 
-// Update user controller
 const updateUser = async (req, res) => {
   try {
-    // TODO: Implement user update logic
-
-    // Example: Update user by ID
     const updatedUser = await User.findByIdAndUpdate(req.params.userId, req.body, { new: true });
     if (!updatedUser) {
       return res.status(404).json({ message: 'User not found' });
@@ -77,12 +64,8 @@ const updateUser = async (req, res) => {
   }
 };
 
-// Delete user controller
 const deleteUser = async (req, res) => {
   try {
-    // TODO: Implement user deletion logic
-
-    // Example: Delete user by ID
     const deletedUser = await User.findByIdAndDelete(req.params.userId);
     if (!deletedUser) {
       return res.status(404).json({ message: 'User not found' });
@@ -98,24 +81,18 @@ const deleteUser = async (req, res) => {
 const login = async (req, res) => {
   try {
     const { email, password } = req.body;
-    // console.log(req.body);
-    // Check if the admin exists
     const admin = await Admin.findOne({ email });
-    // console.log(admin);
 
     if (!admin) {
       return res.status(401).json({ message: 'Invalid credentials' });
     }
 
-    // Check if the password is valid
     const isPasswordValid=(password==admin.password);
-    // const isPasswordValid = await bcrypt.compare(password, admin.password);
 
     if (!isPasswordValid) {
       return res.status(401).json({ message: 'Invalid credentials' });
     }
 
-    // Create and sign a JWT token
     const token = jwt.sign({ adminId: admin._id ,role:'admin'}, 'myKey', { expiresIn: '1h' });
     console.log("token : ",token);
     res.status(200).json({ token });

@@ -1,23 +1,21 @@
-import { useDispatch } from "react-redux";
-import { FaChevronLeft, FaChevronRight } from "react-icons/fa";
-import { MdEdit } from "react-icons/md";
-import { MdDeleteForever } from "react-icons/md";
-import { FaSignOutAlt } from "react-icons/fa"; // Import the logout icon
-import { logoutAdmin } from "../reducers/authSlice";
 import { useEffect, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { useDispatch } from "react-redux";
+import { MdEdit,MdDeleteForever } from "react-icons/md";
+import { FaSignOutAlt } from "react-icons/fa";
+import { logoutAdmin } from "../reducers/authSlice";
 import axios from "axios";
 import { BASE_URL } from "../url";
-import { Link, useNavigate } from "react-router-dom";
 
 function Dashboard() {
   const dispatch = useDispatch();
   const [users, setUsers] = useState([]);
+  const [searchTerm, setSearchTerm] = useState("")
   const navigate = useNavigate();
 
   useEffect(() => {
     const adminToken = localStorage.getItem("adminToken");
 
-    // Check if adminToken is present before making the request
     if (adminToken) {
       axios
         .get(`${BASE_URL}/admin/users`, {
@@ -29,30 +27,42 @@ function Dashboard() {
           setUsers(results.data);
         })
         .catch((error) => {
-          // Handle errors, e.g., unauthorized access
           console.error("Error fetching user data:", error.response.data);
         });
     } else {
-      // Handle case where adminToken is missing
       console.error("Admin token not found.");
     }
   }, []);
 
   const handleLogout = () => {
     dispatch(logoutAdmin());
-    localStorage.removeItem("adminToken"); // Remove the token from localStorage
-    // localStorage.removeItem('userId'); // Remove the user ID from localStorage
-    // Other logout logic, such as navigating to the login page
+    localStorage.removeItem("adminToken");
     navigate("/login");
   };
 
   const handleDelete = (userId) => {
     if (confirm("Are you sure ?")) {
-      axios.delete(`${BASE_URL}/admin/users/${userId}`).then((result) => {
-        console.log("then");
-        console.log(result);
-      });
+      const adminToken = localStorage.getItem("adminToken");
+      axios
+        .delete(`${BASE_URL}/admin/users/${userId}`, {
+          headers: {
+            Authorization: adminToken,
+          },
+        })
+        .then((result) => {
+          console.log("then");
+          console.log(result);
+          alert(result.data.message);
+          setUsers((users) => users);
+        })
+        .catch((err) => {
+          console.log(err);
+          alert(err.data.message);
+        });
     }
+  };
+  const filterUsers = () => {
+    return users.filter((user) => user.name.toLowerCase().includes(searchTerm.toLowerCase()) || user.email.toLowerCase().includes(searchTerm.toLowerCase()));
   };
 
   return (
@@ -66,11 +76,14 @@ function Dashboard() {
       <div className="relative pb-40">
         <div className="flex items-center absolute -top-12 left-40 ">
           <p className="mr-4">Search: </p>
-          <input className="p-2 outline outline-2 rounded-md outline-gray-200 focus:outline-gray-400" type="text" placeholder="search..." />
+          <input className="p-2 outline outline-2 rounded-md outline-gray-200 focus:outline-gray-400" type="text" placeholder="search..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
         </div>
-        <div className="flex text-gray-300 gap-2 absolute right-40 -top-12">
-          <FaChevronLeft className="border p-2 cursor-pointer w-12 h-8" />
-          <FaChevronRight className="border p-2 cursor-pointer w-12 h-8" />
+        <div className="flex bg-blue-500 text-white p-2 rounded-lg gap-2 absolute right-40 -top-12">
+          {/* <FaChevronLeft className="border p-2 cursor-pointer w-12 h-8" />
+          <FaChevronRight className="border p-2 cursor-pointer w-12 h-8" /> */}
+          <Link to="/createuser">
+            <button>Create User</button>
+          </Link>
         </div>
         <table className="bg-white shadow-xl w-[80%] mt-20 text-gray-600 mx-auto overflow-hidden  rounded-lg">
           <thead className="bg-slate-100">
@@ -84,7 +97,7 @@ function Dashboard() {
             </tr>
           </thead>
           <tbody>
-            {users.map((item) => {
+            {filterUsers().map((item) => {
               return (
                 <tr key={item._id} className="hover:bg-gray-200 hover:text-gray-950">
                   <td className="border-b-2 p-4 pl-10">

@@ -1,6 +1,5 @@
 const jwt = require('jsonwebtoken');
 
-// Authentication middleware
 const authenticateJWT = (req, res, next) => {
   const token = req.header('Authorization');
   console.log("authenticateJWT - token : ",token);
@@ -13,13 +12,12 @@ const authenticateJWT = (req, res, next) => {
     if (err) {
       return res.status(403).json({ message: 'Forbidden' });
     }
-    console.log("jwt verify user : ",user);
+    // console.log("jwt verify user : ",user);
     req.user = user;
     next();
   });
 };
 
-// Admin role check middleware
 const isAdmin = (req, res, next) => {
   if (req.user && req.user.role === 'admin') {
     next();

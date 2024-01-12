@@ -20,7 +20,7 @@ const login = async (req, res) => {
     }
 
     const token = jwt.sign({ userId: user._id ,role:'user'}, 'myKey', { expiresIn: '1h' });
-    res.status(200).json({ token, userId: user._id }); // Include userId in the response
+    res.status(200).json({ token, userId: user._id }); 
   } catch (error) {
     console.log(error);
     res.status(500).json({ message: 'Internal Server Error' });
@@ -30,19 +30,16 @@ const login = async (req, res) => {
   
 const register = async (req, res) => {
   try {
-    // Extract user data from the request body
     const { name, email, password } = req.body;
-
-    // Check if the user already exists
+    console.log("req.body ",req.body);
+    console.log("req.file ",req.file);
     const existingUser = await User.findOne({ email });
     if (existingUser) {
       return res.status(400).json({ message: 'User already exists' });
     }
 
-    // Hash the password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-      // Create a new user with profile image URL
       const newUser = new User({
         name,
         email,
@@ -50,7 +47,6 @@ const register = async (req, res) => {
         profile: req.file ? `${req.file.filename}` : null,
       });
 
-      // Save the user to the database
       await newUser.save();
 
       res.status(201).json({ message: 'User registered successfully' });
@@ -61,19 +57,12 @@ const register = async (req, res) => {
   }
 };
 
-const logout=async(req,res)=>{
-  res.clearCookie('jwtToken');
 
-  res.json({ message: 'Logout successful' });
-}
 
 const getUserById = async (req, res) => {
   try {
-    // Fetch user data from the database by ID
-    console.log("I am inside getUserById");
-    console.log(req.params);
+
     const user = await User.findById(req.params.userId);
-    console.log(user);
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     } 
@@ -85,9 +74,23 @@ const getUserById = async (req, res) => {
     res.status(500).json({ message: 'Internal Server Error' });
   }
 };
+
+const editUserById=async(req,res)=>{
+  try {
+    const updatedUser = await User.findByIdAndUpdate(req.params.userId, req.body, { new: true });
+    if (!updatedUser) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    res.status(200).json({ message: 'User updated successfully', user: updatedUser });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({message:'internal server error'});
+  }
+}
 module.exports={
     login,
-    logout,
     register,
-    getUserById
+    getUserById,
+    editUserById
   }
