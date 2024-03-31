@@ -19,7 +19,7 @@ const storage = multer.diskStorage({
 const upload = multer({ storage: storage })
 
 router.post('/login', login);
-router.post('/register',authenticateJWT,upload.single('profilePhoto'), register);
+router.post('/register',upload.single('profilePhoto'), register);
 router.get('/getuser/:userId',authenticateJWT, getUserById); 
 router.put('/edituser/:userId',authenticateJWT,upload.single('profilePhoto'), editUserById); 
 
